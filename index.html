@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AquaSafe — Drinking Water Potability Checker | AI/ML Project</title>
+<meta name="description" content="AquaSafe checks whether drinking water is safe using a logistic regression model trained on 1,000 water samples — pH, hardness, TDS, chloramines, sulfate, conductivity, organic carbon, trihalomethanes and turbidity. Try it live in your browser.">
+<link rel="canonical" href="https://aquasafe.vercel.app/">
+<meta property="og:title" content="AquaSafe — Drinking Water Potability Checker">
+<meta property="og:description" content="Enter 9 water-test readings and instantly see the chance your water is safe to drink, with a real trained ML model running in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://aquasafe.vercel.app/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="AquaSafe — Drinking Water Potability Checker">
+<meta name="twitter:description" content="Logistic regression water potability checker. Try the live demo in your browser.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"AquaSafe","applicationCategory":"EducationalApplication","description":"Drinking water potability checker using logistic regression.","url":"https://aquasafe.vercel.app/"}</script>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;max-width:720px;margin:0 auto;padding:24px;line-height:1.5}
+h1{font-size:2em} label{display:block;margin:12px 0 4px;font-weight:bold}
+input{width:100%;padding:10px;font-size:16px;border:1px solid #000;border-radius:4px;box-sizing:border-box}
+button{margin-top:16px;margin-right:8px;padding:12px 24px;font-size:17px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer}
+#result{margin-top:24px;padding:20px;border:2px solid #000;border-radius:8px;display:none}
+#result b{font-size:1.6em}
+.note{color:#333;font-size:.95em} code{background:#f2f2f2;padding:2px 5px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 20px}
+</style>
+</head>
+<body>
+<h1>&#128167; AquaSafe — Water Potability Checker</h1>
+<p class="note">A 2nd-year B.Tech AI/ML project by Vikranth Reddy. A logistic regression model trained on 1,000 synthetic water samples checks whether drinking water is safe from 9 lab readings. 5-fold CV: <b>accuracy = 68.2%</b>, <b>AUC = 0.74</b> vs a majority-class baseline of 54.8%.</p>
+<div class="grid">
+<label>pH<input type="number" step="any" id="f0" value="7.4"></label>
+<label>Hardness (mg/L)<input type="number" step="any" id="f1" value="200"></label>
+<label>Solids / TDS (ppm)<input type="number" step="any" id="f2" value="20000"></label>
+<label>Chloramines (ppm)<input type="number" step="any" id="f3" value="7.5"></label>
+<label>Sulfate (mg/L)<input type="number" step="any" id="f4" value="330"></label>
+<label>Conductivity (μS/cm)<input type="number" step="any" id="f5" value="430"></label>
+<label>Organic carbon (ppm)<input type="number" step="any" id="f6" value="14"></label>
+<label>Trihalomethanes (μg/L)<input type="number" step="any" id="f7" value="65"></label>
+<label>Turbidity (NTU)<input type="number" step="any" id="f8" value="4.0"></label>
+</div>
+<button onclick="predict()">Check My Water</button>
+<button onclick="tryClean()">Try clean tap water</button>
+<button onclick="tryDirty()">Try murky water</button>
+<div id="result"></div>
+<p class="note">How it works: each reading is standardised (subtract the training mean, divide by the standard deviation), multiplied by the model&apos;s learned weight, and summed with a bias; a sigmoid turns the total into a probability of the water being potable. The exact same weights run in this page and in the Python training script (<code>train.py</code>), so the browser result matches the trained model.</p>
+<p class="note">Try it: clean tap water (pH 7.0, hardness 180, TDS 15,000, turbidity 3.0) &rarr; about 86.6% potable. Murky water (pH 6.2, TDS 45,000, trihalomethanes 110, turbidity 6.2) &rarr; about 0.3% potable — do not drink. Typical city supply scores around 46%.</p>
+<p class="note">Honest note: this model was trained on synthetic data modelled on the classic water-potability dataset, so it is a classroom demo — a real lab test is the only way to certify drinking water.</p>
+<p><a href="https://github.com/HVRGAMING2705/aquasafe">View source on GitHub</a></p>
+<script>
+const FEATURES = ["ph", "hardness", "solids", "chloramines", "sulfate", "conductivity", "organic_carbon", "trihalomethanes", "turbidity"];
+const MEAN = [6.965330138804884, 193.39589264801947, 22297.210099844753, 7.097811477436985, 332.1243432594855, 429.95650929560975, 14.347890248352178, 65.31442596424979, 3.983824646249407];
+const STD = [1.1864668264758098, 32.44909583014958, 8608.380251940396, 1.463789590849696, 40.91148066871905, 81.43496835121434, 3.3829402945084075, 15.58190192858885, 0.803549097627911];
+const COEF = [-0.014262800678674406, -0.08590933257408617, -0.18056035898762246, 0.10180645270719652, -0.19670965762952758, -0.2638719113459263, -0.19695784155118257, -0.4762876693931845, -0.8658907743644546];
+const INTERCEPT = -0.22863341840868498;
+function potabilityProb(vals){
+  let z = INTERCEPT;
+  for (let i = 0; i < 9; i++) z += COEF[i] * (vals[i] - MEAN[i]) / STD[i];
+  return 1 / (1 + Math.exp(-z)) * 100;
+}
+function show(){
+  const vals = [];
+  for (let i = 0; i < 9; i++) vals.push(parseFloat(document.getElementById("f" + i).value) || 0);
+  const p = potabilityProb(vals);
+  const el = document.getElementById("result");
+  el.style.display = "block";
+  const verdict = p >= 50 ? "&#9989; POTABLE — safe to drink" : "&#10060; NOT POTABLE — do not drink";
+  el.innerHTML = "<b>" + p.toFixed(1) + "% potable</b><br>" + verdict +
+    "<br><span class=note>Probability the water is safe to drink, from the 9 readings above. This is a classroom demo on synthetic data, not a lab certification.</span>";
+}
+function predict(){ show(); }
+function tryClean(){ const v = [7.0,180,15000,7.0,300,400,12,50,3.0]; for (let i = 0; i < 9; i++) document.getElementById("f" + i).value = v[i]; show(); }
+function tryDirty(){ const v = [6.2,260,45000,9.5,420,620,22,110,6.2]; for (let i = 0; i < 9; i++) document.getElementById("f" + i).value = v[i]; show(); }
+</script>
+</body>
+</html>
