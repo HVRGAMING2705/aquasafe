@@ -4,7 +4,7 @@ features, mean, std = m["features"], m["mean"], m["std"]
 coef, icpt = m["coef"], m["intercept"]
 mt = m["metrics"]
 acc, auc, base = mt["cv_accuracy"], mt["auc"], mt["baseline_accuracy"]
-DOMAIN = "aquasafe.vercel.app"
+DOMAIN = "aquasafe-beta.vercel.app"
 LABELS = {
  "ph": "pH", "hardness": "Hardness (mg/L)", "solids": "Solids / TDS (ppm)",
  "chloramines": "Chloramines (ppm)", "sulfate": "Sulfate (mg/L)",

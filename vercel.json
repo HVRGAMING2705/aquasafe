@@ -28,7 +28,7 @@
     },
     {
      "key": "Access-Control-Allow-Origin",
-     "value": "https://aquasafe.vercel.app"
+     "value": "https://aquasafe-beta.vercel.app"
     },
     {
      "key": "Content-Security-Policy",

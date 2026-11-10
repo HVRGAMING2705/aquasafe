@@ -1,7 +1,7 @@
 from pptx import Presentation
 from pptx.util import Inches, Pt
 import sys
-DOMAIN = sys.argv[1] if len(sys.argv) > 1 else "aquasafe.vercel.app"
+DOMAIN = sys.argv[1] if len(sys.argv) > 1 else "aquasafe-beta.vercel.app"
 prs = Presentation(); prs.slide_width = Inches(13.33); prs.slide_height = Inches(7.5)
 def add(i, title, lines):
     s = prs.slides.add_slide(prs.slide_layouts[1])
